@@ -16,7 +16,7 @@ const Videos = [
 export default function Home() {
   const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
   const [likedVideos, setLikedVideos] = useState<Set<number>>(new Set());
-  const [muted, setMuted] = useState(true);
+  const [muted, setMuted] = useState(false);
   useEffect(() => {
     const observers: IntersectionObserver[] = [];
 
