@@ -65,55 +65,6 @@ export default function Home() {
           className="h-dvh snap-start flex justify-center items-center bg-black relative"
         >
           <div className="relative flex justify-center items-center gap-3 w-full h-full">
-            {/* Icons Sidebar */}
-            <div className=" flex flex-col gap-5 z-10">
-              {/* Like Button */}
-              <div className="flex flex-col items-center gap-1">
-                <button
-                  className={`w-12 h-12 rounded-full flex justify-center items-center transition-all duration-300 text-2xl backdrop-blur-md hover:bg-white/20 hover:scale-110 active:scale-95 cursor-pointer ${
-                    likedVideos.has(item.id)
-                      ? "bg-white/10 text-red-500"
-                      : "bg-white/10 text-white"
-                  }`}
-                  onClick={() => handleLike(item.id)}
-                >
-                  {likedVideos.has(item.id) ? <FaHeart /> : <FiHeart />}
-                </button>
-                <span className="text-xs text-white text-center w-12 whitespace-nowrap overflow-hidden text-ellipsis">
-                  Like
-                </span>
-              </div>
-
-              {/* Comment Button */}
-              <div className="flex flex-col items-center gap-1">
-                <button className="w-12 h-12 rounded-full flex justify-center items-center bg-white/10 text-white text-2xl transition-all duration-300 backdrop-blur-md hover:bg-white/20 hover:scale-110 active:scale-95 cursor-pointer">
-                  <FiMessageCircle />
-                </button>
-                <span className="text-xs text-white text-center w-12 whitespace-nowrap overflow-hidden text-ellipsis">
-                  Comment
-                </span>
-              </div>
-
-              {/* Share Button */}
-              <div className="flex flex-col items-center gap-1">
-                <button className="w-12 h-12 rounded-full flex justify-center items-center bg-white/10 text-white text-2xl transition-all duration-300 backdrop-blur-md hover:bg-white/20 hover:scale-110 active:scale-95 cursor-pointer">
-                  <FiShare2 />
-                </button>
-                <span className="text-xs text-white text-center w-12 whitespace-nowrap overflow-hidden text-ellipsis">
-                  Share
-                </span>
-              </div>
-
-              {/* Bookmark Button */}
-              <div className="flex flex-col items-center gap-1">
-                <button className="w-12 h-12 rounded-full flex justify-center items-center bg-white/10 text-white text-2xl transition-all duration-300 backdrop-blur-md hover:bg-white/20 hover:scale-110 active:scale-95 cursor-pointer">
-                  <FiBookmark />
-                </button>
-                <span className="text-xs text-white text-center w-12 whitespace-nowrap overflow-hidden text-ellipsis">
-                  Save
-                </span>
-              </div>
-            </div>
             <div className="relative w-[25%]">
               <video
                 ref={(el) => {
