@@ -1,65 +1,147 @@
-import Image from "next/image";
+"use client";
+
+import { useEffect, useRef, useState } from "react";
+import { FiHeart, FiMessageCircle, FiShare2, FiBookmark } from "react-icons/fi";
+import { FaHeart } from "react-icons/fa";
+import { AiOutlineMuted as UnmuteIcon } from "react-icons/ai";
+import { ImVolumeMute2 as MutedIcon } from "react-icons/im";
+
+const Videos = [
+  { id: 1, video: "/Quran/quranvideo1.mp4" },
+  { id: 2, video: "/Quran/quranvideo2.mp4" },
+  { id: 3, video: "/Quran/quranvideo3.mp4" },
+  { id: 4, video: "/Quran/quranvideo4.mp4" },
+];
 
 export default function Home() {
+  const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
+  const [likedVideos, setLikedVideos] = useState<Set<number>>(new Set());
+  const [muted, setMuted] = useState(true);
+  useEffect(() => {
+    const observers: IntersectionObserver[] = [];
+
+    videoRefs.current.forEach((video) => {
+      if (!video) return;
+
+      const observer = new IntersectionObserver(
+        ([entry]) => {
+          if (entry.isIntersecting) {
+            video.play();
+          } else {
+            video.pause();
+          }
+        },
+        { threshold: 0.7 }, // 70% visible = play
+      );
+
+      observer.observe(video);
+      observers.push(observer);
+    });
+
+    return () => observers.forEach((obs) => obs.disconnect());
+  }, []);
+
+  const handleClick = (index: number) => {
+    const video = videoRefs.current[index];
+    if (!video) return;
+    video.paused ? video.play() : video.pause();
+  };
+
+  const handleLike = (id: number) => {
+    const newLiked = new Set(likedVideos);
+    if (newLiked.has(id)) {
+      newLiked.delete(id);
+    } else {
+      newLiked.add(id);
+    }
+    setLikedVideos(newLiked);
+  };
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <div className="h-dvh overflow-y-scroll snap-y snap-mandatory bg-black">
+      {Videos.map((item, index) => (
+        <div
+          key={item.id}
+          className="h-dvh snap-start flex justify-center items-center bg-black relative"
+        >
+          <div className="relative flex justify-center items-center gap-3 w-full h-full">
+            {/* Icons Sidebar */}
+            <div className=" flex flex-col gap-5 z-10">
+              {/* Like Button */}
+              <div className="flex flex-col items-center gap-1">
+                <button
+                  className={`w-12 h-12 rounded-full flex justify-center items-center transition-all duration-300 text-2xl backdrop-blur-md hover:bg-white/20 hover:scale-110 active:scale-95 cursor-pointer ${
+                    likedVideos.has(item.id)
+                      ? "bg-white/10 text-red-500"
+                      : "bg-white/10 text-white"
+                  }`}
+                  onClick={() => handleLike(item.id)}
+                >
+                  {likedVideos.has(item.id) ? <FaHeart /> : <FiHeart />}
+                </button>
+                <span className="text-xs text-white text-center w-12 whitespace-nowrap overflow-hidden text-ellipsis">
+                  Like
+                </span>
+              </div>
+
+              {/* Comment Button */}
+              <div className="flex flex-col items-center gap-1">
+                <button className="w-12 h-12 rounded-full flex justify-center items-center bg-white/10 text-white text-2xl transition-all duration-300 backdrop-blur-md hover:bg-white/20 hover:scale-110 active:scale-95 cursor-pointer">
+                  <FiMessageCircle />
+                </button>
+                <span className="text-xs text-white text-center w-12 whitespace-nowrap overflow-hidden text-ellipsis">
+                  Comment
+                </span>
+              </div>
+
+              {/* Share Button */}
+              <div className="flex flex-col items-center gap-1">
+                <button className="w-12 h-12 rounded-full flex justify-center items-center bg-white/10 text-white text-2xl transition-all duration-300 backdrop-blur-md hover:bg-white/20 hover:scale-110 active:scale-95 cursor-pointer">
+                  <FiShare2 />
+                </button>
+                <span className="text-xs text-white text-center w-12 whitespace-nowrap overflow-hidden text-ellipsis">
+                  Share
+                </span>
+              </div>
+
+              {/* Bookmark Button */}
+              <div className="flex flex-col items-center gap-1">
+                <button className="w-12 h-12 rounded-full flex justify-center items-center bg-white/10 text-white text-2xl transition-all duration-300 backdrop-blur-md hover:bg-white/20 hover:scale-110 active:scale-95 cursor-pointer">
+                  <FiBookmark />
+                </button>
+                <span className="text-xs text-white text-center w-12 whitespace-nowrap overflow-hidden text-ellipsis">
+                  Save
+                </span>
+              </div>
+            </div>
+            <div className="relative w-[25%]">
+              <video
+                ref={(el) => {
+                  videoRefs.current[index] = el;
+                }}
+                loop
+                playsInline
+                muted={muted}
+                onClick={() => handleClick(index)}
+                className="h-[90vh] w-full rounded-lg cursor-pointer"
+              >
+                <source src={item.video} type="video/mp4" />
+              </video>
+              {!muted ? (
+                <UnmuteIcon
+                  onClick={() => setMuted(true)}
+                  className="absolute top-5 right-5 text-white text-3xl opacity-70"
+                />
+              ) : (
+                <MutedIcon
+                  onClick={() => setMuted(false)}
+                  className="absolute top-5 right-5 text-white text-3xl opacity-70"
+                />
+              )}
+            </div>
+          </div>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+      ))}
     </div>
   );
 }
