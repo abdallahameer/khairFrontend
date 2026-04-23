@@ -65,7 +65,7 @@ export default function Home() {
           className="h-dvh snap-start flex justify-center items-center bg-black relative"
         >
           <div className="relative flex justify-center items-center gap-3 w-full h-full">
-            <div className="relative w-[25%]">
+            <div className="relative w-full md:w-[25%] h-full md:h-[90vh]">
               <video
                 ref={(el) => {
                   videoRefs.current[index] = el;
@@ -74,7 +74,7 @@ export default function Home() {
                 playsInline
                 muted={muted}
                 onClick={() => handleClick(index)}
-                className="h-[90vh] w-full rounded-lg cursor-pointer"
+                className="h-full w-full object-contain bg-black md:h-[90vh] md:rounded-lg cursor-pointer"
               >
                 <source src={item.video} type="video/mp4" />
               </video>
