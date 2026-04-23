@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { FiHeart, FiMessageCircle, FiShare2, FiBookmark } from "react-icons/fi";
-import { FaHeart } from "react-icons/fa";
+import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
+
 import { AiOutlineMuted as UnmuteIcon } from "react-icons/ai";
 import { ImVolumeMute2 as MutedIcon } from "react-icons/im";
-
+import { IoMdMore as MoreIcon } from "react-icons/io";
+import { LuDownload as DownloadIcon } from "react-icons/lu";
 const Videos = [
   { id: 1, video: "/Quran/quranvideo1.mp4" },
   { id: 2, video: "/Quran/quranvideo2.mp4" },
@@ -15,11 +16,9 @@ const Videos = [
 
 export default function Home() {
   const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
-  const [likedVideos, setLikedVideos] = useState<Set<number>>(new Set());
   const [muted, setMuted] = useState(false);
   useEffect(() => {
     const observers: IntersectionObserver[] = [];
-
     videoRefs.current.forEach((video) => {
       if (!video) return;
 
@@ -31,7 +30,7 @@ export default function Home() {
             video.pause();
           }
         },
-        { threshold: 0.7 }, // 70% visible = play
+        { threshold: 0.7 },
       );
 
       observer.observe(video);
@@ -47,14 +46,13 @@ export default function Home() {
     video.paused ? video.play() : video.pause();
   };
 
-  const handleLike = (id: number) => {
-    const newLiked = new Set(likedVideos);
-    if (newLiked.has(id)) {
-      newLiked.delete(id);
-    } else {
-      newLiked.add(id);
-    }
-    setLikedVideos(newLiked);
+  const handleDownload = (videoUrl: string) => {
+    const link = document.createElement("a");
+    link.href = videoUrl;
+    link.download = videoUrl.split("/").pop() || "video.mp4";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   return (
@@ -74,7 +72,7 @@ export default function Home() {
                 playsInline
                 muted={muted}
                 onClick={() => handleClick(index)}
-                className="h-full w-full object-contain bg-black md:h-[90vh] md:rounded-lg cursor-pointer"
+                className="h-full w-full object-contain md:h-[90vh] md:rounded-lg md:object-contain cursor-pointer"
               >
                 <source src={item.video} type="video/mp4" />
               </video>
@@ -89,6 +87,22 @@ export default function Home() {
                   className="absolute top-5 right-5 text-white text-3xl opacity-70"
                 />
               )}
+              <DropdownMenu.Root>
+                <DropdownMenu.Trigger asChild>
+                  <button className="absolute top-5 left-5 text-white text-3xl opacity-70 hover:opacity-100 transition-opacity">
+                    <MoreIcon />
+                  </button>
+                </DropdownMenu.Trigger>
+                <DropdownMenu.Content className="bg-white text-black rounded-md shadow-lg p-2 min-w-[150px]">
+                  <DropdownMenu.Item
+                    onClick={() => handleDownload(item.video)}
+                    className="flex gap-2 items-center px-3 py-2 cursor-pointer hover:bg-gray-200 rounded transition-colors"
+                  >
+                    <DownloadIcon className="ml-2" />
+                    <p>Download Video</p>
+                  </DropdownMenu.Item>
+                </DropdownMenu.Content>
+              </DropdownMenu.Root>
             </div>
           </div>
         </div>
