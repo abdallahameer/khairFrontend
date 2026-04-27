@@ -1,59 +1,29 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useState, useRef } from "react";
 import { AiOutlineMuted as UnmuteIcon } from "react-icons/ai";
 import { ImVolumeMute2 as MutedIcon } from "react-icons/im";
 import { LuCheck as ApproveIcon, LuX as RejectIcon } from "react-icons/lu";
-import {
-  getPendingVideos,
-  deletePendingVideo,
-  addApprovedVideo,
-  PendingVideo,
-} from "../helpers/videoDB";
-
-interface PendingVideoWithUrl extends PendingVideo {
-  objectUrl: string;
-}
+import { useVideoContext } from "../context/VideoContext";
 
 export default function VideoReviewPage() {
-  const [pendingVideos, setPendingVideos] = useState<PendingVideoWithUrl[]>([]);
+  const { pendingVideos, setPendingVideos, setVideos } = useVideoContext();
   const [muted, setMuted] = useState(false);
   const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
 
-  useEffect(() => {
-    const load = async () => {
-      const videos = await getPendingVideos();
-      const withUrls: PendingVideoWithUrl[] = videos.map((v) => ({
-        ...v,
-        objectUrl: URL.createObjectURL(v.file),
-      }));
-      setPendingVideos(withUrls);
-    };
-    load();
-
-    return () => {
-      pendingVideos.forEach((v) => URL.revokeObjectURL(v.objectUrl));
-    };
-  }, []);
-
-  const handleApprove = async (id: number | string) => {
+  const handleApprove = (id: number | string) => {
     const video = pendingVideos.find((v) => v.id === id);
     if (!video) return;
 
-    await addApprovedVideo({ id: video.id, file: video.file });
-    await deletePendingVideo(id);
-
-    URL.revokeObjectURL(video.objectUrl);
+    setVideos((prev) => [...prev, video]);
     setPendingVideos((prev) => prev.filter((v) => v.id !== id));
   };
 
-  const handleReject = async (id: number | string) => {
+  const handleReject = (id: number | string) => {
     const video = pendingVideos.find((v) => v.id === id);
     if (!video) return;
 
-    await deletePendingVideo(id);
-
-    URL.revokeObjectURL(video.objectUrl);
+    URL.revokeObjectURL(video.video);
     setPendingVideos((prev) => prev.filter((v) => v.id !== id));
   };
 
@@ -95,7 +65,7 @@ export default function VideoReviewPage() {
                         muted={muted}
                         onClick={() => handleClick(index)}
                         className="w-full h-full object-contain cursor-pointer"
-                        src={item.objectUrl}
+                        src={item.video}
                       />
                       {!muted ? (
                         <UnmuteIcon

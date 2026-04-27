@@ -1,58 +1,35 @@
 "use client";
 
-import { useRef, useState, useEffect } from "react";
+import { useRef } from "react";
 import { LuPlus as PlusIcon } from "react-icons/lu";
-import VideosComponent, { Video } from "./components/videos";
-import { addPendingVideo, getApprovedVideos } from "./helpers/videoDB";
+import VideosComponent from "./components/videos";
+import { useVideoContext } from "./context/VideoContext";
+import { Video } from "./helpers/videoDB";
 
 const defaultVideos: Video[] = [{ id: 1, video: "/Quran/quranvideo1.mp4" }];
 
 export default function Home() {
-  const [videos, setVideos] = useState<Video[]>(defaultVideos);
+  const { videos, setPendingVideos } = useVideoContext();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const loadApprovedVideos = async () => {
-    const approvedList = await getApprovedVideos();
-    const approvedVideos: Video[] = approvedList.map((v) => ({
-      id: v.id,
-      video: URL.createObjectURL(v.file),
-    }));
-    setVideos([...defaultVideos, ...approvedVideos]);
-  };
-
-  useEffect(() => {
-    loadApprovedVideos();
-  }, []);
-
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === "visible") {
-        loadApprovedVideos();
-      }
-    };
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-    return () =>
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
-  }, []);
-
-  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file?.type.startsWith("video/")) {
       alert("Please select a valid video file");
       return;
     }
 
-    try {
-      await addPendingVideo({
+    const videoUrl = URL.createObjectURL(file);
+    setPendingVideos((prev) => [
+      ...prev,
+      {
         id: Date.now(),
-        file: file,
+        video: videoUrl,
         uploadedAt: new Date().toISOString(),
-      });
-      alert("Video uploaded! It is now pending reviewer approval.");
-    } catch {
-      alert("Failed to save the video. Please try again.");
-    }
+      },
+    ]);
 
+    alert("Video uploaded! It is now pending reviewer approval.");
     e.target.value = "";
   };
 
