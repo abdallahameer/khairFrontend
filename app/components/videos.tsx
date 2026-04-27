@@ -2,16 +2,11 @@
 
 import { useEffect, useRef, useState } from "react";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
-
 import { AiOutlineMuted as UnmuteIcon } from "react-icons/ai";
 import { ImVolumeMute2 as MutedIcon } from "react-icons/im";
 import { IoMdMore as MoreIcon } from "react-icons/io";
 import { LuDownload as DownloadIcon } from "react-icons/lu";
-
-export interface Video {
-  id: number | string;
-  video: string;
-}
+import { Video } from "../helpers/videoDB";
 
 export default function VideosComponent({ videos }: { videos: Video[] }) {
   const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
