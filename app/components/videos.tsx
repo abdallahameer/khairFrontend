@@ -71,7 +71,7 @@ export default function VideosComponent({ videos }: { videos: Video[] }) {
       {videos.map((item, index) => (
         <div
           key={item.id}
-          className="h-dvh snap-start flex justify-center items-center bg-black relative"
+          className="h-dvh snap-start flex justify-center items-center bg-black relative p-2 sm:p-4"
         >
           <div className="relative flex justify-center items-center gap-3 w-full h-full">
             <div className="relative w-full lg:w-[40%] h-full lg:h-[90vh]">
@@ -91,28 +91,28 @@ export default function VideosComponent({ videos }: { videos: Video[] }) {
               {!muted ? (
                 <UnmuteIcon
                   onClick={() => setMuted(true)}
-                  className="absolute top-5 right-5 text-white text-3xl opacity-70"
+                  className="absolute top-3 right-3 sm:top-5 sm:right-5 text-white text-2xl sm:text-3xl opacity-70 hover:opacity-100 transition-opacity cursor-pointer"
                 />
               ) : (
                 <MutedIcon
                   onClick={() => setMuted(false)}
-                  className="absolute top-5 right-5 text-white text-3xl opacity-70"
+                  className="absolute top-3 right-3 sm:top-5 sm:right-5 text-white text-2xl sm:text-3xl opacity-70 hover:opacity-100 transition-opacity cursor-pointer"
                 />
               )}
 
               <DropdownMenu.Root>
                 <DropdownMenu.Trigger asChild>
-                  <button className="absolute top-5 left-5 text-white text-3xl opacity-70 hover:opacity-100 transition-opacity">
+                  <button className="absolute top-3 left-3 sm:top-5 sm:left-5 text-white text-2xl sm:text-3xl opacity-70 hover:opacity-100 transition-opacity p-2 hover:bg-black/30 rounded-full">
                     <MoreIcon />
                   </button>
                 </DropdownMenu.Trigger>
-                <DropdownMenu.Content className="bg-white text-black rounded-md shadow-lg p-2 min-w-[150px]">
+                <DropdownMenu.Content className="bg-gray-900 text-white rounded-md shadow-lg p-2 min-w-[150px] border border-gray-700">
                   <DropdownMenu.Item
                     onClick={() => handleDownload(item.video)}
-                    className="flex gap-2 items-center px-3 py-2 cursor-pointer hover:bg-gray-200 rounded transition-colors"
+                    className="flex gap-2 items-center px-3 py-2 cursor-pointer hover:bg-gray-800 rounded transition-colors text-sm"
                   >
                     <DownloadIcon className="ml-2" />
-                    <p>Download Video</p>
+                    <p>Download</p>
                   </DropdownMenu.Item>
                 </DropdownMenu.Content>
               </DropdownMenu.Root>
