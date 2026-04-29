@@ -2,48 +2,51 @@
 
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
+import { supabase } from "../Supabaseclient";
 
 interface LoginFormInputs {
   userName: string;
   password: string;
 }
 
-export default function VideoReviewPage() {
+export default function LoginPage() {
   const {
     register,
     handleSubmit,
-    watch,
-    formState: { errors },
-  } = useForm<LoginFormInputs>({
-    defaultValues: {
-      userName: "",
-      password: "",
-    },
-  });
+    formState: { errors, isSubmitting },
+  } = useForm<LoginFormInputs>();
 
-  const formValues = watch();
   const router = useRouter();
 
-  const onSubmit = () => {
-    if (
-      formValues.userName.toLowerCase() == "abdallah ameer" &&
-      formValues.password == "123456"
-    ) {
-      router.push("/videoReview");
+  const onSubmit = async (data: LoginFormInputs) => {
+    const { data: reviewer, error } = await supabase
+      .from("reviewers")
+      .select("*")
+      .eq("username", data.userName.toLowerCase())
+      .eq("password", data.password)
+      .single();
+
+    if (error || !reviewer) {
+      alert("Invalid username or password");
+      return;
     }
+
+    localStorage.setItem(
+      "reviewer",
+      JSON.stringify({ id: reviewer.id, username: reviewer.username }),
+    );
+
+    router.push("/videoReview");
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-black p-4 sm:p-6">
-      <div className="w-full max-w-md bg-gray-900 rounded-lg shadow-lg p-6 sm:p-8 border border-gray-800">
-        <h1 className="text-2xl sm:text-3xl font-bold text-center mb-6 sm:mb-8 text-white">
+    <div className="flex items-center justify-center min-h-screen bg-black">
+      <div className="w-full max-w-md bg-gray-900 rounded-lg shadow-md p-8">
+        <h1 className="text-3xl font-bold text-center mb-8 text-white">
           Login
         </h1>
 
-        <form
-          onSubmit={handleSubmit(onSubmit)}
-          className="space-y-5 sm:space-y-6"
-        >
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           <div>
             <label
               htmlFor="userName"
@@ -62,10 +65,10 @@ export default function VideoReviewPage() {
                   message: "Username must be at least 3 characters",
                 },
               })}
-              className="w-full px-4 py-3 sm:py-2 text-base sm:text-sm border border-gray-700 rounded-lg bg-gray-800 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+              className="w-full px-4 py-2 border border-gray-700 rounded-lg bg-gray-800 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
             {errors.userName && (
-              <p className="mt-2 text-xs sm:text-sm text-red-400">
+              <p className="mt-1 text-sm text-red-400">
                 {errors.userName.message}
               </p>
             )}
@@ -89,10 +92,10 @@ export default function VideoReviewPage() {
                   message: "Password must be at least 6 characters",
                 },
               })}
-              className="w-full px-4 py-3 sm:py-2 text-base sm:text-sm border border-gray-700 rounded-lg bg-gray-800 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+              className="w-full px-4 py-2 border border-gray-700 rounded-lg bg-gray-800 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
             {errors.password && (
-              <p className="mt-2 text-xs sm:text-sm text-red-400">
+              <p className="mt-1 text-sm text-red-400">
                 {errors.password.message}
               </p>
             )}
@@ -100,18 +103,12 @@ export default function VideoReviewPage() {
 
           <button
             type="submit"
-            className="w-full bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-medium py-3 sm:py-2 px-4 rounded-lg transition duration-200 text-base sm:text-sm"
+            disabled={isSubmitting}
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition duration-200 disabled:opacity-50"
           >
-            Sign In
+            {isSubmitting ? "Signing in..." : "Sign In"}
           </button>
         </form>
-
-        <p className="text-center text-xs sm:text-sm text-gray-400 mt-6 sm:mt-8">
-          Don't have an account?{" "}
-          <a href="#" className="text-blue-400 hover:text-blue-300 underline">
-            Sign up
-          </a>
-        </p>
       </div>
     </div>
   );

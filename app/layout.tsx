@@ -1,5 +1,4 @@
 import "./globals.css";
-import { VideoProvider } from "./context/VideoContext";
 
 export default function RootLayout({
   children,
@@ -8,9 +7,7 @@ export default function RootLayout({
 }>) {
   return (
     <html dir="ltr" lang="en" className="h-full w-full antialiased">
-      <body className="min-h-full w-full flex flex-col">
-        <VideoProvider>{children}</VideoProvider>
-      </body>
+      <body className="min-h-full w-full flex flex-col">{children}</body>
     </html>
   );
 }
