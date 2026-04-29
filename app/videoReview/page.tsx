@@ -1,30 +1,101 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useEffect, useState, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { AiOutlineMuted as UnmuteIcon } from "react-icons/ai";
 import { ImVolumeMute2 as MutedIcon } from "react-icons/im";
 import { LuCheck as ApproveIcon, LuX as RejectIcon } from "react-icons/lu";
-import { useVideoContext } from "../context/VideoContext";
+import { supabase } from "../Supabaseclient";
+
+interface PendingVideo {
+  id: number | string;
+  video_url: string;
+  uploaded_at: string;
+}
 
 export default function VideoReviewPage() {
-  const { pendingVideos, setPendingVideos, setVideos } = useVideoContext();
+  const [pendingVideos, setPendingVideos] = useState<PendingVideo[]>([]);
   const [muted, setMuted] = useState(false);
+  const [loading, setLoading] = useState(true);
   const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
+  const router = useRouter();
 
-  const handleApprove = (id: number | string) => {
+  useEffect(() => {
+    const reviewer = localStorage.getItem("reviewer");
+    if (!reviewer) {
+      router.push("/login");
+      return;
+    }
+    loadPendingVideos();
+  }, []);
+
+  const loadPendingVideos = async () => {
+    const { data, error } = await supabase
+      .from("pending_videos")
+      .select("*")
+      .order("uploaded_at", { ascending: true });
+
+    if (error) {
+      console.error("Error loading pending videos:", error.message);
+    } else {
+      setPendingVideos(data);
+    }
+    setLoading(false);
+  };
+
+  const handleApprove = async (id: number | string) => {
     const video = pendingVideos.find((v) => v.id === id);
     if (!video) return;
 
-    setVideos((prev) => [...prev, video]);
+    const { error: insertError } = await supabase
+      .from("approved_videos")
+      .insert({ id: video.id, video_url: video.video_url });
+
+    if (insertError) {
+      alert("Failed to approve: " + insertError.message);
+      return;
+    }
+
+    const { error: deleteError } = await supabase
+      .from("pending_videos")
+      .delete()
+      .eq("id", id);
+
+    if (deleteError) {
+      alert("Failed to remove from pending: " + deleteError.message);
+      return;
+    }
+
     setPendingVideos((prev) => prev.filter((v) => v.id !== id));
   };
 
-  const handleReject = (id: number | string) => {
+  const handleReject = async (id: number | string) => {
     const video = pendingVideos.find((v) => v.id === id);
     if (!video) return;
 
-    URL.revokeObjectURL(video.video);
+    const urlParts = video.video_url.split("/videos/");
+    const filePath = urlParts[1];
+
+    if (filePath) {
+      await supabase.storage.from("videos").remove([filePath]);
+    }
+
+    const { error } = await supabase
+      .from("pending_videos")
+      .delete()
+      .eq("id", id);
+
+    if (error) {
+      alert("Failed to reject: " + error.message);
+      return;
+    }
+
     setPendingVideos((prev) => prev.filter((v) => v.id !== id));
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("reviewer");
+    router.push("/login");
   };
 
   const handleClick = (index: number) => {
@@ -33,28 +104,40 @@ export default function VideoReviewPage() {
     video.paused ? video.play() : video.pause();
   };
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-black">
+        <p className="text-white text-lg">Loading...</p>
+      </div>
+    );
+  }
+
   return (
-    <div className="flex items-center justify-center min-h-screen bg-black p-3 sm:p-4 lg:p-6 py-6 sm:py-8">
+    <div className="flex items-center justify-center min-h-screen bg-black p-4">
       <div className="w-full max-w-4xl">
-        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-6 sm:mb-8 text-center">
-          Video Review
-        </h1>
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-4xl font-bold text-white">Video Review</h1>
+          <button
+            onClick={handleLogout}
+            className="text-gray-400 hover:text-white text-sm transition-colors"
+          >
+            Logout
+          </button>
+        </div>
 
         {pendingVideos.length === 0 ? (
-          <div className="bg-gray-900 border border-gray-800 rounded-lg p-8 sm:p-12 text-center">
-            <p className="text-gray-400 text-base sm:text-lg">
-              No pending videos to review
-            </p>
+          <div className="bg-gray-900 rounded-lg p-12 text-center">
+            <p className="text-gray-400 text-lg">No pending videos to review</p>
           </div>
         ) : (
-          <div className="space-y-5 sm:space-y-8">
+          <div className="space-y-8">
             {pendingVideos.map((item, index) => (
               <div
                 key={item.id}
-                className="bg-gray-900 border border-gray-800 rounded-lg overflow-hidden"
+                className="bg-gray-900 rounded-lg overflow-hidden"
               >
-                <div className="flex flex-col lg:flex-row gap-4 sm:gap-6 p-4 sm:p-6">
-                  <div className="flex-1 min-w-0">
+                <div className="flex flex-col lg:flex-row gap-6 p-6">
+                  <div className="flex-1">
                     <div className="relative bg-black rounded-lg overflow-hidden aspect-video">
                       <video
                         ref={(el) => {
@@ -65,59 +148,53 @@ export default function VideoReviewPage() {
                         muted={muted}
                         onClick={() => handleClick(index)}
                         className="w-full h-full object-contain cursor-pointer"
-                        src={item.video}
+                        src={item.video_url}
                       />
                       {!muted ? (
                         <UnmuteIcon
                           onClick={() => setMuted(true)}
-                          className="absolute top-2 sm:top-3 right-2 sm:right-3 text-white text-xl sm:text-2xl opacity-70 hover:opacity-100 cursor-pointer transition-opacity p-1 hover:bg-black/30 rounded"
+                          className="absolute top-3 right-3 text-white text-2xl opacity-70 cursor-pointer hover:opacity-100"
                         />
                       ) : (
                         <MutedIcon
                           onClick={() => setMuted(false)}
-                          className="absolute top-2 sm:top-3 right-2 sm:right-3 text-white text-xl sm:text-2xl opacity-70 hover:opacity-100 cursor-pointer transition-opacity p-1 hover:bg-black/30 rounded"
+                          className="absolute top-3 right-3 text-white text-2xl opacity-70 cursor-pointer hover:opacity-100"
                         />
                       )}
                     </div>
                   </div>
 
-                  <div className="flex flex-col justify-between lg:w-80">
+                  <div className="flex flex-col justify-between lg:w-64">
                     <div>
-                      <h3 className="text-white font-semibold text-base sm:text-lg mb-3 sm:mb-4">
+                      <h3 className="text-white font-semibold text-lg mb-2">
                         Video Details
                       </h3>
-                      <div className="space-y-2 text-gray-300 text-xs sm:text-sm">
+                      <div className="space-y-2 text-gray-300 text-sm">
                         <p>
                           <span className="text-gray-400">Uploaded:</span>{" "}
-                          <br className="sm:hidden" />
-                          <span className="sm:inline"> </span>
-                          {new Date(item.uploadedAt).toLocaleString()}
+                          {new Date(item.uploaded_at).toLocaleString()}
                         </p>
                         <p>
-                          <span className="text-gray-400">Status:</span>
-                          <span className="inline-block ml-2 bg-yellow-600/30 text-yellow-300 px-2 py-1 rounded text-xs">
-                            Pending Review
-                          </span>
+                          <span className="text-gray-400">Status:</span> Pending
+                          Review
                         </p>
                       </div>
                     </div>
 
-                    <div className="flex gap-2 sm:gap-3 mt-4 sm:mt-6">
+                    <div className="flex gap-3 mt-6">
                       <button
                         onClick={() => handleApprove(item.id)}
-                        className="flex-1 bg-green-600 hover:bg-green-700 active:bg-green-800 text-white font-medium py-2.5 sm:py-3 px-3 sm:px-4 rounded-lg transition duration-200 flex items-center justify-center gap-2 text-sm sm:text-base"
+                        className="flex-1 bg-green-600 hover:bg-green-700 text-white font-medium py-3 px-4 rounded-lg transition duration-200 flex items-center justify-center gap-2"
                       >
-                        <ApproveIcon className="text-lg sm:text-xl" />
-                        <span className="hidden sm:inline">Approve</span>
-                        <span className="sm:hidden">Approve</span>
+                        <ApproveIcon className="text-xl" />
+                        Approve
                       </button>
                       <button
                         onClick={() => handleReject(item.id)}
-                        className="flex-1 bg-red-600 hover:bg-red-700 active:bg-red-800 text-white font-medium py-2.5 sm:py-3 px-3 sm:px-4 rounded-lg transition duration-200 flex items-center justify-center gap-2 text-sm sm:text-base"
+                        className="flex-1 bg-red-600 hover:bg-red-700 text-white font-medium py-3 px-4 rounded-lg transition duration-200 flex items-center justify-center gap-2"
                       >
-                        <RejectIcon className="text-lg sm:text-xl" />
-                        <span className="hidden sm:inline">Reject</span>
-                        <span className="sm:hidden">Reject</span>
+                        <RejectIcon className="text-xl" />
+                        Reject
                       </button>
                     </div>
                   </div>
