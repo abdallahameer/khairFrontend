@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
-import { supabase } from "../Supabaseclient";
+import { usePost } from "../hooks/useRequest";
 
 interface LoginFormInputs {
   userName: string;
@@ -15,28 +15,21 @@ export default function LoginPage() {
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<LoginFormInputs>();
-
   const router = useRouter();
+  const { post } = usePost();
 
   const onSubmit = async (data: LoginFormInputs) => {
-    const { data: reviewer, error } = await supabase
-      .from("reviewers")
-      .select("*")
-      .eq("username", data.userName.toLowerCase())
-      .eq("password", data.password)
-      .single();
+    try {
+      const reviewer = await post("/api/auth/login", {
+        username: data.userName,
+        password: data.password,
+      });
 
-    if (error || !reviewer) {
+      localStorage.setItem("reviewer", JSON.stringify(reviewer));
+      router.push("/videoReview");
+    } catch (error: any) {
       alert("Invalid username or password");
-      return;
     }
-
-    localStorage.setItem(
-      "reviewer",
-      JSON.stringify({ id: reviewer.id, username: reviewer.username }),
-    );
-
-    router.push("/videoReview");
   };
 
   return (
@@ -45,7 +38,6 @@ export default function LoginPage() {
         <h1 className="text-3xl font-bold text-center mb-8 text-white">
           Login
         </h1>
-
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           <div>
             <label
@@ -65,7 +57,7 @@ export default function LoginPage() {
                   message: "Username must be at least 3 characters",
                 },
               })}
-              className="w-full px-4 py-2 border border-gray-700 rounded-lg bg-gray-800 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-gray-700 rounded-lg bg-gray-800 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
             {errors.userName && (
               <p className="mt-1 text-sm text-red-400">
@@ -73,7 +65,6 @@ export default function LoginPage() {
               </p>
             )}
           </div>
-
           <div>
             <label
               htmlFor="password"
@@ -92,7 +83,7 @@ export default function LoginPage() {
                   message: "Password must be at least 6 characters",
                 },
               })}
-              className="w-full px-4 py-2 border border-gray-700 rounded-lg bg-gray-800 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-gray-700 rounded-lg bg-gray-800 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
             {errors.password && (
               <p className="mt-1 text-sm text-red-400">
@@ -100,7 +91,6 @@ export default function LoginPage() {
               </p>
             )}
           </div>
-
           <button
             type="submit"
             disabled={isSubmitting}
