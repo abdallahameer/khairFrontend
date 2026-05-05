@@ -4,7 +4,7 @@ import { useRef, useState, useEffect } from "react";
 import { LuPlus as PlusIcon } from "react-icons/lu";
 import VideosComponent from "./components/videos";
 import { Video } from "./helpers/videoDB";
-import { supabase } from "./Supabaseclient";
+import { usePost, useGet } from "./hooks/useRequest";
 
 const defaultVideos: Video[] = [{ id: 1, video: "/Quran/quranvideo1.mp4" }];
 
@@ -13,27 +13,22 @@ export default function Home() {
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const loadApprovedVideos = async () => {
-    const { data, error } = await supabase
-      .from("approved_videos")
-      .select("*")
-      .order("approved_at", { ascending: true });
-
-    if (error) {
-      console.error("Error loading approved videos:", error.message);
-      return;
-    }
-
-    const approvedVideos: Video[] = data.map((v) => ({
-      id: v.id,
-      video: v.video_url,
-    }));
-
-    setVideos([...defaultVideos, ...approvedVideos]);
-  };
+  const { post } = usePost();
+  const { get } = useGet();
 
   useEffect(() => {
-    loadApprovedVideos();
+    get("/api/videos/approved", {
+      onSuccess: (data: any[]) => {
+        const approved: Video[] = data.map((v) => ({
+          id: v.id,
+          video: v.video_url,
+        }));
+        setVideos([...defaultVideos, ...approved]);
+      },
+      onError: (error) => {
+        console.error("Failed to fetch approved videos:", error);
+      },
+    });
   }, []);
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -46,29 +41,29 @@ export default function Home() {
     setUploading(true);
 
     try {
-      const fileName = `pending/${Date.now()}_${file.name}`;
+      // Convert file to base64 URL for now
+      // Note: For production you'll want to upload to Cloudinary or R2
+      const reader = new FileReader();
+      reader.onload = async () => {
+        const video_url = reader.result as string;
 
-      const { error: uploadError } = await supabase.storage
-        .from("videos")
-        .upload(fileName, file);
-
-      if (uploadError) throw uploadError;
-
-      const { data: urlData } = supabase.storage
-        .from("videos")
-        .getPublicUrl(fileName);
-
-      const { error: dbError } = await supabase.from("pending_videos").insert({
-        id: Date.now(),
-        video_url: urlData.publicUrl,
-      });
-
-      if (dbError) throw dbError;
-
-      alert("Video uploaded! It is now pending reviewer approval.");
+        try {
+          await post("/api/videos/upload", { video_url }, {
+            onSuccess: () => {
+              alert("Video uploaded! It is now pending reviewer approval.");
+            },
+            onError: (error) => {
+              alert("Failed to upload video: " + error.message);
+            },
+          });
+        } catch (err: any) {
+          console.error(err);
+        }
+      };
+      reader.readAsDataURL(file);
     } catch (err: any) {
       console.error(err);
-      alert("Failed to upload video: " + err.message);
+      alert("Failed to process video: " + err.message);
     } finally {
       setUploading(false);
       e.target.value = "";
