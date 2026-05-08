@@ -48,14 +48,18 @@ export default function Home() {
         const video_url = reader.result as string;
 
         try {
-          await post("/api/videos/upload", { video_url }, {
-            onSuccess: () => {
-              alert("Video uploaded! It is now pending reviewer approval.");
+          await post(
+            "/api/videos/upload",
+            { video_url },
+            {
+              onSuccess: () => {
+                alert("Video uploaded! It is now pending reviewer approval.");
+              },
+              onError: (error) => {
+                alert("Failed to upload video: " + error.message);
+              },
             },
-            onError: (error) => {
-              alert("Failed to upload video: " + error.message);
-            },
-          });
+          );
         } catch (err: any) {
           console.error(err);
         }
