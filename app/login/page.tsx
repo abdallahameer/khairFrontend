@@ -20,12 +20,12 @@ export default function LoginPage() {
 
   const onSubmit = async (data: LoginFormInputs) => {
     try {
-      const reviewer = await post("/api/auth/login", {
+      const response = await post("/api/auth/login", {
         username: data.userName,
         password: data.password,
       });
-
-      localStorage.setItem("reviewer", JSON.stringify(reviewer));
+      localStorage.setItem("token", response.token);
+      localStorage.setItem("reviewer", JSON.stringify(response.reviewer));
       router.push("/videoReview");
     } catch (error: any) {
       alert("Invalid username or password");

@@ -6,10 +6,8 @@ import VideosComponent from "./components/videos";
 import { Video } from "./helpers/videoDB";
 import { usePost, useGet } from "./hooks/useRequest";
 
-const defaultVideos: Video[] = [{ id: 1, video: "/Quran/quranvideo1.mp4" }];
-
 export default function Home() {
-  const [videos, setVideos] = useState<Video[]>(defaultVideos);
+  const [videos, setVideos] = useState<Video[]>([]);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -23,7 +21,7 @@ export default function Home() {
           id: v.id,
           video: v.video_url,
         }));
-        setVideos([...defaultVideos, ...approved]);
+        setVideos([...approved]);
       },
       onError: (error) => {
         console.error("Failed to fetch approved videos:", error);
@@ -32,44 +30,46 @@ export default function Home() {
   }, []);
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file?.type.startsWith("video/")) {
-      alert("Please select a valid video file");
+    const files = Array.from(e.target.files || []);
+
+    if (!files.length) {
+      return;
+    }
+
+    const invalidFile = files.find((file) => !file.type.startsWith("video/"));
+
+    if (invalidFile) {
+      alert("Please select only video files");
       return;
     }
 
     setUploading(true);
 
     try {
-      // Convert file to base64 URL for now
-      // Note: For production you'll want to upload to Cloudinary or R2
-      const reader = new FileReader();
-      reader.onload = async () => {
-        const video_url = reader.result as string;
+      const BATCH_SIZE = 5;
 
-        try {
-          await post(
-            "/api/videos/upload",
-            { video_url },
-            {
-              onSuccess: () => {
-                alert("Video uploaded! It is now pending reviewer approval.");
-              },
-              onError: (error) => {
-                alert("Failed to upload video: " + error.message);
-              },
-            },
-          );
-        } catch (err: any) {
-          console.error(err);
-        }
-      };
-      reader.readAsDataURL(file);
+      for (let i = 0; i < files.length; i += BATCH_SIZE) {
+        const batch = files.slice(i, i + BATCH_SIZE);
+
+        await Promise.all(
+          batch.map(async (file) => {
+            const formData = new FormData();
+
+            formData.append("video", file);
+
+            return post("/api/videos/upload", formData);
+          }),
+        );
+      }
+
+      alert(`${files.length} video(s) uploaded successfully!`);
     } catch (err: any) {
       console.error(err);
-      alert("Failed to process video: " + err.message);
+
+      alert("Some uploads failed: " + (err.message || "Unknown error"));
     } finally {
       setUploading(false);
+
       e.target.value = "";
     }
   };
@@ -98,6 +98,7 @@ export default function Home() {
         ref={fileInputRef}
         type="file"
         accept="video/*"
+        multiple
         onChange={handleFileSelect}
         className="hidden"
       />

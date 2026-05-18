@@ -6,14 +6,46 @@ const API_BASE_URL =
 
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 10000,
+  timeout: 1000 * 60 * 10,
 });
 
-// Interceptor for handling errors
+apiClient.interceptors.request.use(
+  (config) => {
+    const token =
+      typeof window !== "undefined" ? localStorage.getItem("token") : null;
+
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+
+    const isFormData = config.data instanceof FormData;
+
+    if (!isFormData) {
+      config.headers["Content-Type"] = "application/json";
+    }
+
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  },
+);
+
 apiClient.interceptors.response.use(
   (response) => response,
+
   (error) => {
     console.error("API Error:", error);
+
+    if (error.response?.status === 401) {
+      localStorage.removeItem("token");
+      localStorage.removeItem("reviewer");
+
+      if (typeof window !== "undefined") {
+        window.location.href = "/login";
+      }
+    }
+
     return Promise.reject(error);
   },
 );
