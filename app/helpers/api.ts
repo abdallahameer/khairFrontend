@@ -11,13 +11,6 @@ export const apiClient = axios.create({
 
 apiClient.interceptors.request.use(
   (config) => {
-    const token =
-      typeof window !== "undefined" ? localStorage.getItem("token") : null;
-
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-
     const isFormData = config.data instanceof FormData;
 
     if (!isFormData) {
@@ -36,16 +29,6 @@ apiClient.interceptors.response.use(
 
   (error) => {
     console.error("API Error:", error);
-
-    if (error.response?.status === 401) {
-      localStorage.removeItem("token");
-      localStorage.removeItem("reviewer");
-
-      if (typeof window !== "undefined") {
-        window.location.href = "/login";
-      }
-    }
-
     return Promise.reject(error);
   },
 );
