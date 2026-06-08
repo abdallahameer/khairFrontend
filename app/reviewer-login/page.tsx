@@ -20,11 +20,10 @@ export default function LoginPage() {
 
   const onSubmit = async (data: LoginFormInputs) => {
     try {
-      const response = await post("/api/auth/login", {
+      const response = await post("/api/auth/reviewer-login", {
         username: data.userName,
         password: data.password,
       });
-      localStorage.setItem("token", response.token);
       localStorage.setItem("reviewer", JSON.stringify(response.reviewer));
       router.push("/videoReview");
     } catch (error: any) {

@@ -19,7 +19,7 @@ export default function VideoReviewPage() {
   useEffect(() => {
     const reviewer = localStorage.getItem("reviewer");
     if (!reviewer) {
-      router.push("/login");
+      router.push("/reviewer-login");
     }
   }, [router]);
 
@@ -43,7 +43,7 @@ export default function VideoReviewPage() {
 
   const handleLogout = () => {
     localStorage.removeItem("reviewer");
-    router.push("/login");
+    router.push("/reviewer-login");
   };
 
   const handleClick = (index: number) => {
