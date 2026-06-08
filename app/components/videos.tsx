@@ -8,11 +8,12 @@ import { IoMdMore as MoreIcon } from "react-icons/io";
 import { LuDownload as DownloadIcon } from "react-icons/lu";
 import { Video } from "../helpers/videoDB";
 import NoContent from "./noContent";
+import { useRouter } from "next/navigation";
 
 export default function VideosComponent({ videos }: { videos: Video[] }) {
   const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
   const [muted, setMuted] = useState(false);
-
+  const router = useRouter();
   useEffect(() => {
     const observers: IntersectionObserver[] = [];
 
@@ -72,9 +73,16 @@ export default function VideosComponent({ videos }: { videos: Video[] }) {
                   onClick={() => handleClick(index)}
                   className="h-full w-full object-contain md:h-[90vh] md:rounded-lg md:object-contain cursor-pointer"
                 >
-                  <source src={item.video} type="video/mp4" />
+                  <source src={item.video_url} type="video/mp4" />
                 </video>
-
+                <div
+                  className="z-50 hover:cursor-pointer absolute bottom-20 left-4 text-white"
+                  onClick={() => router.push(`/profile/${item.user_id}`)}
+                >
+                  <p className="text-white text-3xl md:text-2xl font-bold drop-shadow-lg">
+                    user name: {item.username}
+                  </p>
+                </div>
                 {!muted ? (
                   <UnmuteIcon
                     onClick={() => setMuted(true)}
@@ -95,7 +103,7 @@ export default function VideosComponent({ videos }: { videos: Video[] }) {
                   </DropdownMenu.Trigger>
                   <DropdownMenu.Content className="bg-gray-900 text-white rounded-md shadow-lg p-2 min-w-[150px] border border-gray-700">
                     <DropdownMenu.Item
-                      onClick={() => handleDownload(item.video)}
+                      onClick={() => handleDownload(item.video_url)}
                       className="flex gap-2 items-center px-3 py-2 cursor-pointer hover:bg-gray-800 rounded transition-colors text-sm"
                     >
                       <DownloadIcon className="ml-2" />
