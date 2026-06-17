@@ -1,26 +1,23 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import useSWR from "swr";
 import VideosComponent from "./components/videos";
 import { Video } from "./helpers/videoDB";
-import { useGet } from "./hooks/useRequest";
+import { fetcher } from "./helpers/api";
 
 export default function Home() {
   const [videos, setVideos] = useState<Video[]>([]);
+  const { data, error, isLoading } = useSWR("/api/videos/approved", fetcher);
 
-  const { get } = useGet();
+  if (data && videos.length === 0) {
+    const approved: Video[] = data;
+    setVideos([...approved]);
+  }
 
-  useEffect(() => {
-    get("/api/videos/approved", {
-      onSuccess: (data: any[]) => {
-        const approved: Video[] = data;
-        setVideos([...approved]);
-      },
-      onError: (error) => {
-        console.error("Failed to fetch approved videos:", error);
-      },
-    });
-  }, []);
+  if (error) {
+    console.error("Failed to fetch approved videos:", error);
+  }
 
   return <VideosComponent videos={videos} />;
 }
