@@ -32,3 +32,8 @@ apiClient.interceptors.response.use(
     return Promise.reject(error);
   },
 );
+
+export const fetcher = async (url: string) => {
+  const response = await apiClient.get(url);
+  return response.data;
+};

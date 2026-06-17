@@ -8,35 +8,6 @@ interface UseRequestOptions {
   headers?: Record<string, string>;
 }
 
-export function useGet() {
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const get = async (url: string, options?: UseRequestOptions) => {
-    setLoading(true);
-    setError(null);
-
-    try {
-      const response = await apiClient.get(url, {
-        headers: options?.headers,
-      });
-
-      setLoading(false);
-      options?.onSuccess?.(response.data);
-      return response.data;
-    } catch (err: any) {
-      const message =
-        err.response?.data?.message || err.message || "Request failed";
-      setError(message);
-      setLoading(false);
-      options?.onError?.(err);
-      throw err;
-    }
-  };
-
-  return { get, loading, error };
-}
-
 export function usePost() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);

@@ -1,13 +1,24 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { useRouter, usePathname } from "next/navigation";
 import { LuPlus as PlusIcon } from "react-icons/lu";
 import { LuCircleUser as UserIcon } from "react-icons/lu";
 import { usePost } from "../hooks/useRequest";
+import { AiFillHome as HomeIcon } from "react-icons/ai";
+import { MdOutlineExplore as ExploreIcon } from "react-icons/md";
+import { SlUserFollowing as FollowingIcon } from "react-icons/sl";
+import {
+  FaUserFriends as FriendsIcon,
+  FaTelegramPlane as MessagesIcon,
+} from "react-icons/fa";
+import Image from "next/image";
+import SearchInput from "./searchInput";
 
 interface User {
   id: string;
   username: string;
+  profile_image?: string | null;
 }
 
 interface SidebarProps {
@@ -26,7 +37,8 @@ export default function Sidebar({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const { post } = usePost();
-
+  const router = useRouter();
+  const pathName = usePathname();
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!currentUser) {
       alert("You need to register or login first");
@@ -94,14 +106,45 @@ export default function Sidebar({
         className="hidden"
       />
 
-      <div className="hidden md:flex w-[15%] min-h-full bg-black border-r border-gray-800 flex-col p-2 items-start py-6 gap-6  left-0 top-0 z-50">
+      <div className="fixed top-0 left-0 z-50 hidden min-h-full w-[15%] flex-col items-start gap-6 border-r border-gray-800 bg-black p-2 py-6 md:flex">
+        <SearchInput onSearch={() => {}} onClear={() => {}} />
+        <div
+          onClick={() => {
+            if (pathName !== "/") {
+              router.push("/");
+            } else {
+              window.location.reload();
+            }
+          }}
+          className="flex w-full cursor-pointer items-center gap-2 rounded-md p-2 transition-colors hover:bg-gray-800"
+        >
+          <HomeIcon className="text-2xl text-white" />
+          <p>Home</p>
+        </div>
+
+        <div className="flex w-full cursor-pointer items-center gap-2 rounded-md p-2 transition-colors hover:bg-gray-800">
+          <ExploreIcon className="text-2xl text-white" />
+          <p>Explore</p>
+        </div>
+        <div className="flex w-full cursor-pointer items-center gap-2 rounded-md p-2 transition-colors hover:bg-gray-800">
+          <FollowingIcon className="text-2xl text-white" />
+          <p>Following</p>
+        </div>
+        <div className="flex w-full cursor-pointer items-center gap-2 rounded-md p-2 transition-colors hover:bg-gray-800">
+          <FriendsIcon className="text-2xl text-white" />
+          <p>Friends</p>
+        </div>
+        <div className="flex w-full cursor-pointer items-center gap-2 rounded-md p-2 transition-colors hover:bg-gray-800">
+          <MessagesIcon className="text-2xl text-white" />
+          <p>Messages</p>
+        </div>
         {currentUser && (
           <div
             onClick={handleAddClick}
-            className="w-full flex gap-2 items-center cursor-pointer"
+            className="flex w-full cursor-pointer items-center gap-2 rounded-md p-2 transition-colors hover:bg-gray-800"
           >
-            <div className="bg-transparent w-6 h-6 border rounded-md border-white flex justify-center items-center transition-colors shadow-lg">
-              <PlusIcon className="text-white text-2xl" />
+            <div className="flex h-6 w-6 items-center justify-center rounded-md border border-white bg-transparent shadow-lg transition-colors">
+              <PlusIcon className="text-2xl text-white" />
             </div>
             <p className="text-white">
               {uploading ? "Uploading..." : "Add Video"}
@@ -110,13 +153,33 @@ export default function Sidebar({
         )}
 
         {currentUser ? (
-          <div className="w-full flex flex-col gap-2">
-            <p className="text-white text-sm font-medium truncate">
-              @{currentUser.username}
-            </p>
+          <div className="flex w-full flex-col gap-2">
+            <div
+              onClick={() => router.push(`/profile/${currentUser.id}`)}
+              className="flex w-full cursor-pointer items-center gap-2 rounded-md p-2 transition-colors hover:bg-gray-800"
+            >
+              <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-gray-700">
+                {currentUser?.profile_image ? (
+                  <Image
+                    src={currentUser.profile_image}
+                    alt={currentUser.username}
+                    width={32}
+                    height={32}
+                    className="h-full w-full rounded-full object-cover"
+                  />
+                ) : (
+                  <span className="text-sm font-bold text-white">
+                    {currentUser.username[0].toUpperCase()}
+                  </span>
+                )}
+              </div>
+              <p className="truncate text-sm font-medium text-white">
+                @{currentUser.username}
+              </p>
+            </div>
             <button
               onClick={handleLogout}
-              className="text-gray-400 hover:text-white text-xs text-left transition-colors"
+              className="px-2 text-left text-xs text-gray-400 transition-colors hover:text-white"
             >
               Logout
             </button>
@@ -125,19 +188,19 @@ export default function Sidebar({
           <>
             <div
               onClick={onOpenRegister}
-              className="w-full flex gap-2 items-center cursor-pointer"
+              className="flex w-full cursor-pointer items-center gap-2 rounded-md p-2 transition-colors hover:bg-gray-800"
             >
-              <div className="bg-transparent w-6 h-6 border rounded-md border-white flex justify-center items-center transition-colors shadow-lg">
-                <UserIcon className="text-white text-2xl" />
+              <div className="flex h-6 w-6 items-center justify-center rounded-md border border-white bg-transparent shadow-lg transition-colors">
+                <UserIcon className="text-2xl text-white" />
               </div>
               <p className="text-white">Register</p>
             </div>
             <div
               onClick={onOpenLogin}
-              className="w-full flex gap-2 items-center cursor-pointer"
+              className="flex w-full cursor-pointer items-center gap-2 rounded-md p-2 transition-colors hover:bg-gray-800"
             >
-              <div className="bg-transparent w-6 h-6 border rounded-md border-white flex justify-center items-center transition-colors shadow-lg">
-                <UserIcon className="text-white text-2xl" />
+              <div className="flex h-6 w-6 items-center justify-center rounded-md border border-white bg-transparent shadow-lg transition-colors">
+                <UserIcon className="text-2xl text-white" />
               </div>
               <p className="text-white">Login</p>
             </div>
@@ -145,22 +208,82 @@ export default function Sidebar({
         )}
       </div>
 
-      <div className="w-full h-20 bg-black flex justify-center items-center fixed bottom-0 md:hidden z-50">
+      <div className="fixed bottom-0 z-50 flex h-20 w-full items-center justify-around border-t border-gray-800 bg-black md:hidden">
         {currentUser ? (
-          <button
-            onClick={handleAddClick}
-            disabled={uploading}
-            className="bg-red-500 w-12 h-12 rounded-full flex justify-center items-center cursor-pointer hover:bg-red-600 transition-colors disabled:opacity-50"
-          >
-            <PlusIcon className="text-white text-2xl" />
-          </button>
+          <>
+            <button
+              onClick={() => router.push(`/profile/${currentUser.id}`)}
+              className="flex cursor-pointer flex-col items-center gap-1 transition-colors hover:text-gray-300"
+            >
+              <div className="flex h-8 w-full items-center justify-center rounded-full bg-gray-700">
+                {currentUser?.profile_image ? (
+                  <Image
+                    src={currentUser.profile_image}
+                    alt={currentUser.username}
+                    width={32}
+                    height={32}
+                    className="h-full w-full rounded-full object-cover"
+                  />
+                ) : (
+                  <span className="text-sm font-bold text-white">
+                    {currentUser.username[0].toUpperCase()}
+                  </span>
+                )}
+              </div>
+            </button>
+            <button className="flex cursor-pointer flex-col items-center gap-1 transition-colors hover:text-gray-300">
+              <MessagesIcon className="text-2xl text-white" />
+            </button>
+
+            <button
+              onClick={handleAddClick}
+              disabled={uploading}
+              className="flex cursor-pointer flex-col items-center gap-1 transition-colors hover:text-gray-300 disabled:opacity-50"
+            >
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-500">
+                <PlusIcon className="text-2xl text-white" />
+              </div>
+            </button>
+            <button className="flex cursor-pointer flex-col items-center gap-1 transition-colors hover:text-gray-300">
+              <ExploreIcon className="text-2xl text-white" />
+            </button>
+            <button
+              onClick={() => {
+                if (pathName !== "/") {
+                  router.push("/");
+                } else {
+                  window.location.reload();
+                }
+              }}
+              className="flex cursor-pointer flex-col items-center gap-1 transition-colors hover:text-gray-300"
+            >
+              <HomeIcon className="text-2xl text-white" />
+            </button>
+          </>
         ) : (
-          <button
-            onClick={onOpenRegister}
-            className="bg-blue-600 w-12 h-12 rounded-full flex justify-center items-center cursor-pointer hover:bg-blue-700 transition-colors"
-          >
-            <UserIcon className="text-white text-2xl" />
-          </button>
+          <>
+            <button className="flex cursor-pointer flex-col items-center gap-1 transition-colors hover:text-gray-300">
+              <ExploreIcon className="text-2xl text-white" />
+            </button>
+            <button
+              onClick={onOpenRegister}
+              className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-pink-600 transition-colors hover:bg-pink-700"
+            >
+              <UserIcon className="text-2xl text-white" />
+            </button>
+            <button
+              onClick={() => {
+                if (pathName !== "/") {
+                  router.push("/");
+                } else {
+                  window.location.reload();
+                }
+              }}
+              className="flex cursor-pointer flex-col items-center gap-1 transition-colors hover:text-gray-300"
+            >
+              <HomeIcon className="text-2xl text-white" />
+            </button>
+          </>
         )}
       </div>
     </>

@@ -1,16 +1,19 @@
 "use client";
 
 import SingleVideoComponent from "@/app/components/singleVideo";
-import { apiClient } from "@/app/helpers/api";
+import { fetcher } from "@/app/helpers/api";
 import { Video } from "@/app/helpers/videoDB";
+import { usePost } from "@/app/hooks/useRequest";
 import { useEffect, useRef, useState } from "react";
 import useSWR from "swr";
+import Image from "next/image";
 
 interface UserProfile {
   user: {
     id: string;
     username: string;
     created_at: string;
+    profile_image: string | null;
   };
   videos: {
     id: string;
@@ -19,25 +22,58 @@ interface UserProfile {
   }[];
 }
 
-const fetcher = (url: string) => apiClient.get(url).then((res) => res.data);
-
 export default function UserProfile({
   params,
 }: {
   params: Promise<{ user_id: string }>;
 }) {
+  const { post } = usePost();
   const [userId, setUserId] = useState<string | null>(null);
   const [selectedVideo, setSelectedVideo] = useState<Video | null>(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
   const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
+  const imageInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     params.then(({ user_id }) => setUserId(user_id));
   }, [params]);
 
-  const { data, isLoading } = useSWR<UserProfile>(
+  const { data, isLoading, mutate } = useSWR<UserProfile>(
     userId ? `/api/users/${userId}` : null,
     fetcher,
   );
+
+  const currentUser =
+    typeof window !== "undefined"
+      ? JSON.parse(localStorage.getItem("user") || "null")
+      : null;
+  const isOwnProfile = currentUser?.id === userId;
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !currentUser) return;
+
+    if (!file.type.startsWith("image/")) {
+      alert("Please select an image file");
+      return;
+    }
+
+    setUploadingImage(true);
+
+    try {
+      const formData = new FormData();
+      formData.append("image", file);
+      formData.append("user_id", currentUser.id);
+
+      await post("/api/users/upload-profile-image", formData);
+      mutate(); // refresh profile data
+    } catch (err) {
+      alert("Failed to upload image");
+    } finally {
+      setUploadingImage(false);
+      e.target.value = "";
+    }
+  };
 
   useEffect(() => {
     if (!data) return;
@@ -68,7 +104,7 @@ export default function UserProfile({
 
   if (!userId || isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-black">
+      <div className="flex min-h-screen items-center justify-center bg-black">
         <p className="text-white">Loading...</p>
       </div>
     );
@@ -76,7 +112,7 @@ export default function UserProfile({
 
   if (!data) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-black">
+      <div className="flex min-h-screen items-center justify-center bg-black">
         <p className="text-white">User not found</p>
       </div>
     );
@@ -85,22 +121,65 @@ export default function UserProfile({
   return (
     <div className="min-h-screen bg-black text-white">
       <div className="max-w-full px-4 pt-8 pb-6">
-        <div className="w-24 h-24 rounded-full bg-gray-800 mb-4 mx-auto"></div>
-        <div className="text-center mb-6">
+        <div className="mb-4 flex justify-center">
+          <div className="relative">
+            {data.user.profile_image ? (
+              <Image
+                src={data.user.profile_image}
+                alt={data.user.username}
+                width={96}
+                height={96}
+                className="h-24 w-24 rounded-full border-2 border-gray-700 object-cover"
+              />
+            ) : (
+              <div className="flex h-24 w-24 items-center justify-center rounded-full border-2 border-gray-700 bg-gray-800">
+                <span className="text-3xl text-gray-400">
+                  {data.user.username[0].toUpperCase()}
+                </span>
+              </div>
+            )}
+
+            {isOwnProfile && (
+              <button
+                onClick={() => imageInputRef.current?.click()}
+                disabled={uploadingImage}
+                className="absolute right-0 bottom-0 flex h-7 w-7 items-center justify-center rounded-full bg-red-600 transition hover:bg-red-700 disabled:opacity-50"
+              >
+                {uploadingImage ? (
+                  <span className="text-xs text-white">...</span>
+                ) : (
+                  <span className="text-lg leading-none text-white">+</span>
+                )}
+              </button>
+            )}
+          </div>
+
+          <input
+            ref={imageInputRef}
+            type="file"
+            accept="image/*"
+            onChange={handleImageUpload}
+            className="hidden"
+          />
+        </div>
+
+        <div className="mb-6 text-center">
           <h2 className="text-2xl font-bold">@{data.user.username}</h2>
-          <p className="text-gray-400 text-sm mt-1">
+          <p className="mt-1 text-sm text-gray-400">
             Joined {new Date(data.user.created_at).toLocaleDateString()}
           </p>
         </div>
 
-        <div className="flex gap-3 mb-6">
-          <button className="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg transition">
-            Follow
-          </button>
-          <button className="flex-1 bg-gray-800 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg transition">
-            Message
-          </button>
-        </div>
+        {!isOwnProfile && (
+          <div className="mb-6 flex gap-3">
+            <button className="flex-1 rounded-lg bg-red-600 px-4 py-2 font-bold text-white transition hover:bg-red-700">
+              Follow
+            </button>
+            <button className="flex-1 rounded-lg bg-gray-800 px-4 py-2 font-bold text-white transition hover:bg-gray-700">
+              Message
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="px-4 pt-2 pb-8">
@@ -111,7 +190,7 @@ export default function UserProfile({
             {data.videos.map((video, index) => (
               <div
                 key={video.id}
-                className="relative bg-gray-900 rounded-lg overflow-hidden aspect-square group cursor-pointer"
+                className="group relative aspect-square cursor-pointer overflow-hidden rounded-lg bg-gray-900"
                 onClick={() =>
                   setSelectedVideo({
                     ...video,
@@ -127,14 +206,14 @@ export default function UserProfile({
                   muted
                   loop
                   playsInline
-                  className="w-full h-full object-cover"
+                  className="h-full w-full object-cover"
                 >
                   <source src={video.video_url} type="video/mp4" />
                 </video>
 
-                <div className="absolute inset-0 bg-opacity-0 group-hover:bg-opacity-40 transition flex items-center justify-center">
+                <div className="bg-opacity-0 group-hover:bg-opacity-40 absolute inset-0 flex items-center justify-center transition group-hover:bg-black">
                   <svg
-                    className="w-12 h-12 text-white opacity-0 group-hover:opacity-100 transition"
+                    className="h-12 w-12 text-white opacity-0 transition group-hover:opacity-100"
                     fill="currentColor"
                     viewBox="0 0 24 24"
                   >
