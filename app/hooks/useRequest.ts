@@ -127,13 +127,26 @@ export function useDelete() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const deleteRequest = async (url: string, options?: UseRequestOptions) => {
+  const deleteRequest = async (
+    url: string,
+    data?: any,
+    options?: UseRequestOptions,
+  ) => {
     setLoading(true);
     setError(null);
 
     try {
       const response = await apiClient.delete(url, {
+        data,
         headers: options?.headers,
+        onUploadProgress: (progressEvent) => {
+          if (progressEvent.total && options?.onProgress) {
+            const progress = Math.round(
+              (progressEvent.loaded / progressEvent.total) * 100,
+            );
+            options.onProgress(progress);
+          }
+        },
       });
 
       setLoading(false);

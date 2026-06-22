@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import "./globals.css";
 import Sidebar from "./components/sidebar";
 import Register from "./components/regester";
@@ -18,7 +18,6 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  // useState initializer runs only in the browser — safe to use localStorage here
   const [currentUser, setCurrentUser] = useState<User | null>(() => {
     if (typeof window === "undefined") return null;
     const stored = localStorage.getItem("user");
@@ -42,7 +41,7 @@ export default function RootLayout({
 
   return (
     <html dir="ltr" lang="en" className="h-full w-full antialiased">
-      <body className="min-h-full w-full flex flex-row justify-between">
+      <body className="flex min-h-full w-full flex-row justify-between">
         <Sidebar
           currentUser={currentUserData?.user || currentUser}
           onOpenRegister={() => setOpenRegister(true)}
@@ -53,7 +52,7 @@ export default function RootLayout({
           onLogout={handleLogout}
         />
 
-        <div className="flex flex-col h-full w-full md:ml-[15%]">
+        <div className="flex h-full w-full flex-col md:ml-[15%]">
           {children}
         </div>
 
