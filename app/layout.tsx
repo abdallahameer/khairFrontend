@@ -5,7 +5,7 @@ import "./globals.css";
 import Sidebar from "./components/sidebar";
 import Register from "./components/regester";
 import useSWR from "swr";
-import { fetcher } from "./helpers/api";
+import { fetcher, getCurrentUser } from "./helpers/api";
 
 interface User {
   id: string;
@@ -18,11 +18,7 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const [currentUser, setCurrentUser] = useState<User | null>(() => {
-    if (typeof window === "undefined") return null;
-    const stored = localStorage.getItem("user");
-    return stored ? JSON.parse(stored) : null;
-  });
+  const currentUser = getCurrentUser();
 
   const [openRegister, setOpenRegister] = useState(false);
   const [registrationOrLogin, setRegistrationOrLogin] = useState<
@@ -36,7 +32,6 @@ export default function RootLayout({
 
   const handleLogout = () => {
     localStorage.removeItem("user");
-    setCurrentUser(null);
   };
 
   return (
