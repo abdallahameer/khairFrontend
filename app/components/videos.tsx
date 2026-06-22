@@ -50,6 +50,7 @@ export default function VideosComponent({}) {
   };
 
   useEffect(() => {
+    if (!videos) return;
     const observers: IntersectionObserver[] = [];
 
     videoRefs.current.forEach((video, index) => {
