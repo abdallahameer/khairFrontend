@@ -37,3 +37,8 @@ export const fetcher = async (url: string) => {
   const response = await apiClient.get(url);
   return response.data;
 };
+
+export const getCurrentUser = () => {
+  const stored = localStorage.getItem("user");
+  return stored ? JSON.parse(stored) : null;
+};

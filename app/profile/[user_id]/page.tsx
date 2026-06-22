@@ -1,26 +1,12 @@
 "use client";
 
 import SingleVideoComponent from "@/app/components/singleVideo";
-import { fetcher } from "@/app/helpers/api";
-import { Video } from "@/app/helpers/videoDB";
+import { fetcher, getCurrentUser } from "@/app/helpers/api";
+import { UserProfileType, Video, VideoItem } from "@/app/helpers/videoDB";
 import { usePost } from "@/app/hooks/useRequest";
 import { useEffect, useRef, useState } from "react";
 import useSWR from "swr";
 import Image from "next/image";
-
-interface UserProfile {
-  user: {
-    id: string;
-    username: string;
-    created_at: string;
-    profile_image: string | null;
-  };
-  videos: {
-    id: string;
-    video_url: string;
-    uploaded_at: string;
-  }[];
-}
 
 export default function UserProfile({
   params,
@@ -31,22 +17,47 @@ export default function UserProfile({
   const [userId, setUserId] = useState<string | null>(null);
   const [selectedVideo, setSelectedVideo] = useState<Video | null>(null);
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [videosType, setVideosType] = useState<"videos" | "liked" | "saved">(
+    "videos",
+  );
   const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
   const imageInputRef = useRef<HTMLInputElement>(null);
-
+  const user = getCurrentUser();
   useEffect(() => {
     params.then(({ user_id }) => setUserId(user_id));
   }, [params]);
 
-  const { data, isLoading, mutate } = useSWR<UserProfile>(
-    userId ? `/api/users/${userId}` : null,
+  const {
+    data: userProfileData,
+    isLoading,
+    mutate,
+  } = useSWR<UserProfileType>(
+    userId
+      ? `/api/users/${userId}${user?.id ? `?viewer_id=${user.id}` : ""}`
+      : null,
     fetcher,
   );
 
-  const currentUser =
-    typeof window !== "undefined"
-      ? JSON.parse(localStorage.getItem("user") || "null")
-      : null;
+  const { data: savedVideos } = useSWR<Video[]>(
+    user?.id ? `/api/users/${user.id}/saved-videos` : null,
+    fetcher,
+  );
+
+  const { data: likedVideos } = useSWR<VideoItem[]>(
+    user?.id ? `/api/users/${user.id}/liked-videos` : null,
+    fetcher,
+  );
+
+  const videosToDisplay =
+    videosType === "videos"
+      ? userProfileData?.videos || []
+      : videosType === "liked"
+        ? likedVideos || []
+        : videosType === "saved"
+          ? savedVideos || []
+          : [];
+
+  const currentUser = getCurrentUser();
   const isOwnProfile = currentUser?.id === userId;
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -66,7 +77,7 @@ export default function UserProfile({
       formData.append("user_id", currentUser.id);
 
       await post("/api/users/upload-profile-image", formData);
-      mutate(); // refresh profile data
+      mutate();
     } catch (err) {
       alert("Failed to upload image");
     } finally {
@@ -76,7 +87,7 @@ export default function UserProfile({
   };
 
   useEffect(() => {
-    if (!data) return;
+    if (!videosToDisplay) return;
 
     const observers: IntersectionObserver[] = [];
 
@@ -100,7 +111,7 @@ export default function UserProfile({
     });
 
     return () => observers.forEach((obs) => obs.disconnect());
-  }, [data]);
+  }, [videosToDisplay]);
 
   if (!userId || isLoading) {
     return (
@@ -110,7 +121,7 @@ export default function UserProfile({
     );
   }
 
-  if (!data) {
+  if (!userProfileData) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-black">
         <p className="text-white">User not found</p>
@@ -123,10 +134,10 @@ export default function UserProfile({
       <div className="max-w-full px-4 pt-8 pb-6">
         <div className="mb-4 flex justify-center">
           <div className="relative">
-            {data.user.profile_image ? (
+            {userProfileData.user.profile_image ? (
               <Image
-                src={data.user.profile_image}
-                alt={data.user.username}
+                src={userProfileData.user.profile_image}
+                alt={userProfileData.user.username}
                 width={96}
                 height={96}
                 className="h-24 w-24 rounded-full border-2 border-gray-700 object-cover"
@@ -134,7 +145,7 @@ export default function UserProfile({
             ) : (
               <div className="flex h-24 w-24 items-center justify-center rounded-full border-2 border-gray-700 bg-gray-800">
                 <span className="text-3xl text-gray-400">
-                  {data.user.username[0].toUpperCase()}
+                  {userProfileData.user.username[0].toUpperCase()}
                 </span>
               </div>
             )}
@@ -164,9 +175,12 @@ export default function UserProfile({
         </div>
 
         <div className="mb-6 text-center">
-          <h2 className="text-2xl font-bold">@{data.user.username}</h2>
+          <h2 className="text-2xl font-bold">
+            @{userProfileData.user.username}
+          </h2>
           <p className="mt-1 text-sm text-gray-400">
-            Joined {new Date(data.user.created_at).toLocaleDateString()}
+            Joined{" "}
+            {new Date(userProfileData.user.created_at).toLocaleDateString()}
           </p>
         </div>
 
@@ -181,23 +195,51 @@ export default function UserProfile({
           </div>
         )}
       </div>
+      {isOwnProfile ? (
+        <div className="flex w-full justify-between border-t px-4">
+          <div
+            className={`flex w-full justify-center gap-8 px-4 py-2 text-xl font-bold ${videosType === "videos" ? "border-b border-white" : ""}`}
+          >
+            <p
+              onClick={() => setVideosType("videos")}
+              className="cursor-pointer text-xl font-bold transition duration-300 hover:text-gray-300"
+            >
+              videos
+            </p>
+          </div>
+          <div
+            className={`flex w-full justify-center gap-8 px-4 py-2 text-xl font-bold ${videosType === "liked" ? "border-b border-white" : ""}`}
+          >
+            <p
+              onClick={() => setVideosType("liked")}
+              className="cursor-pointer text-xl font-bold transition duration-300 hover:text-gray-300"
+            >
+              liked
+            </p>
+          </div>
+          <div
+            className={`flex w-full justify-center gap-8 px-4 py-2 ${videosType === "saved" ? "border-b border-white" : ""}`}
+          >
+            <p
+              onClick={() => setVideosType("saved")}
+              className="cursor-pointer text-xl font-bold transition duration-300 hover:text-gray-300"
+            >
+              saved
+            </p>
+          </div>
+        </div>
+      ) : null}
 
       <div className="px-4 pt-2 pb-8">
-        {data.videos.length === 0 ? (
+        {videosToDisplay.length === 0 ? (
           <p className="text-center text-gray-400">No videos yet</p>
         ) : (
           <div className="grid grid-cols-3 gap-1">
-            {data.videos.map((video, index) => (
+            {videosToDisplay.map((video, index) => (
               <div
                 key={video.id}
                 className="group relative aspect-square cursor-pointer overflow-hidden rounded-lg bg-gray-900"
-                onClick={() =>
-                  setSelectedVideo({
-                    ...video,
-                    username: data.user.username,
-                    user_id: data.user.id,
-                  })
-                }
+                onClick={() => setSelectedVideo(video.id as string)}
               >
                 <video
                   ref={(el) => {
@@ -228,8 +270,9 @@ export default function UserProfile({
 
       {selectedVideo && (
         <SingleVideoComponent
-          video={selectedVideo}
+          videoId={selectedVideo.toString()}
           onClose={() => setSelectedVideo(null)}
+          userId={userId}
         />
       )}
     </div>

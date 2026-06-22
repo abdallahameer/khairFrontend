@@ -51,32 +51,27 @@ export default function Register({
       setSuccess(true);
 
       reset();
-      window.location.reload(); // Reload to update user state in parent component
-    } catch (err) {
-      // Error is handled by the usePost hook
-    }
+      window.location.reload();
+    } catch (err) {}
   };
 
   if (!isOpen) return null;
 
   return (
     <>
-      {/* Dark Overlay */}
-      <div className="fixed inset-0 bg-black bg-opacity-50 z-40"></div>
+      <div className="bg-opacity-50 fixed inset-0 z-40 bg-black"></div>
 
-      {/* Modal Container */}
-      <div className="fixed inset-0 flex items-center justify-center z-50">
-        <div className="w-full max-w-md bg-gray-900 rounded-lg shadow-md p-8 relative">
-          {/* Close Button */}
+      <div className="fixed inset-0 z-50 flex items-center justify-center">
+        <div className="relative w-full max-w-md rounded-lg bg-gray-900 p-8 shadow-md">
           <button
             onClick={() => {
               setIsOpen(false);
             }}
-            className="absolute top-4 right-4 text-gray-400 hover:text-white transition"
+            className="absolute top-4 right-4 text-gray-400 transition hover:text-white"
             aria-label="Close"
           >
             <svg
-              className="w-6 h-6"
+              className="h-6 w-6"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -90,18 +85,18 @@ export default function Register({
             </svg>
           </button>
 
-          <h1 className="text-3xl font-bold text-center mb-8 text-white">
+          <h1 className="mb-8 text-center text-3xl font-bold text-white">
             {registrationOrLogin === "login" ? "Login" : "Register"}
           </h1>
           {success && (
-            <div className="mb-4 p-3 bg-green-600 text-white rounded-lg text-sm">
+            <div className="mb-4 rounded-lg bg-green-600 p-3 text-sm text-white">
               {registrationOrLogin === "login"
                 ? "Login successful!"
                 : "Registration successful!"}
             </div>
           )}
           {postError && (
-            <div className="mb-4 p-3 bg-red-600 text-white rounded-lg text-sm">
+            <div className="mb-4 rounded-lg bg-red-600 p-3 text-sm text-white">
               {postError}
             </div>
           )}
@@ -109,7 +104,7 @@ export default function Register({
             <div>
               <label
                 htmlFor="userName"
-                className="block text-sm font-medium text-gray-200 mb-2"
+                className="mb-2 block text-sm font-medium text-gray-200"
               >
                 Username
               </label>
@@ -124,7 +119,7 @@ export default function Register({
                     message: "Username must be at least 3 characters",
                   },
                 })}
-                className="w-full px-4 py-2 border border-gray-700 rounded-lg bg-gray-800 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full rounded-lg border border-gray-700 bg-gray-800 px-4 py-2 text-white placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
               />
               {errors.userName && (
                 <p className="mt-1 text-sm text-red-400">
@@ -135,7 +130,7 @@ export default function Register({
             <div>
               <label
                 htmlFor="password"
-                className="block text-sm font-medium text-gray-200 mb-2"
+                className="mb-2 block text-sm font-medium text-gray-200"
               >
                 Password
               </label>
@@ -150,7 +145,7 @@ export default function Register({
                     message: "Password must be at least 6 characters",
                   },
                 })}
-                className="w-full px-4 py-2 border border-gray-700 rounded-lg bg-gray-800 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full rounded-lg border border-gray-700 bg-gray-800 px-4 py-2 text-white placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
               />
               {errors.password && (
                 <p className="mt-1 text-sm text-red-400">
@@ -161,7 +156,7 @@ export default function Register({
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition duration-200 disabled:opacity-50"
+              className="w-full rounded-lg bg-blue-600 px-4 py-2 font-medium text-white transition duration-200 hover:bg-blue-700 disabled:opacity-50"
             >
               {loading
                 ? registrationOrLogin === "login"
