@@ -4,7 +4,7 @@ import SingleVideoComponent from "@/app/components/singleVideo";
 import { fetcher, getCurrentUser } from "@/app/helpers/api";
 import { UserProfileType, Video, VideoItem } from "@/app/helpers/videoDB";
 import { usePost } from "@/app/hooks/useRequest";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import useSWR from "swr";
 import Image from "next/image";
 
@@ -15,7 +15,7 @@ export default function UserProfile({
 }) {
   const { post } = usePost();
   const [userId, setUserId] = useState<string | null>(null);
-  const [selectedVideo, setSelectedVideo] = useState<Video | null>(null);
+  const [selectedVideo, setSelectedVideo] = useState<string | null>(null);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [videosType, setVideosType] = useState<"videos" | "liked" | "saved">(
     "videos",
@@ -48,14 +48,12 @@ export default function UserProfile({
     fetcher,
   );
 
-  const videosToDisplay =
-    videosType === "videos"
-      ? userProfileData?.videos || []
-      : videosType === "liked"
-        ? likedVideos || []
-        : videosType === "saved"
-          ? savedVideos || []
-          : [];
+  const videosToDisplay = useMemo(() => {
+    if (videosType === "videos") return userProfileData?.videos || [];
+    if (videosType === "liked") return likedVideos || [];
+    if (videosType === "saved") return savedVideos || [];
+    return [];
+  }, [videosType, userProfileData?.videos, likedVideos, savedVideos]);
 
   const currentUser = getCurrentUser();
   const isOwnProfile = currentUser?.id === userId;
@@ -270,7 +268,7 @@ export default function UserProfile({
 
       {selectedVideo && (
         <SingleVideoComponent
-          videoId={selectedVideo.toString()}
+          videoId={selectedVideo}
           onClose={() => setSelectedVideo(null)}
           userId={userId}
         />
