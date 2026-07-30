@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.abdalah_ameer.khairmobilev",
+      "sha256_cert_fingerprints": [
+        "2F:54:E7:C7:05:99:C3:1F:E4:C1:31:D9:2A:4E:68:74:68:74:F6:B6:D9:B4:6E:26:AA:69:82:48:E8:57:AF:9A"
+      ]
+    }
+  }
+]
