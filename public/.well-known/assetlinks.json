@@ -5,7 +5,8 @@
       "namespace": "android_app",
       "package_name": "com.abdalah_ameer.khairmobilev",
       "sha256_cert_fingerprints": [
-        "2F:54:E7:C7:05:99:C3:1F:E4:C1:31:D9:2A:4E:68:74:68:74:F6:B6:D9:B4:6E:26:AA:69:82:48:E8:57:AF:9A"
+        "2F:54:E7:C7:05:99:C3:1F:E4:C1:31:D9:2A:4E:68:74:68:74:F6:B6:D9:B4:6E:26:AA:69:82:48:E8:57:AF:9A",
+        "80:D1:B0:7C:80:C4:DC:5F:E7:6C:5D:2D:F4:55:2F:BA:9A:77:46:29:3B:F2:2E:64:17:3F:6D:B0:75:49:3D:E8"
       ]
     }
   }
