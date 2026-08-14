@@ -47,3 +47,20 @@ export interface VideoItem {
   username?: string;
   user_id?: string;
 }
+
+export interface Reports {
+  id: string;
+  reason: string;
+  created_at: string;
+  reporter_id: string;
+  reporter_username: string;
+  reporter_profile_image: string | null;
+  video_id: string;
+  video_url: string;
+  description: string;
+  category: string;
+  video_uploaded_at: string;
+  video_owner_id: string;
+  video_owner_username: string;
+  video_owner_profile_image: string | null;
+}
